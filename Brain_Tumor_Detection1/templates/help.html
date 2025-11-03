@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Help & FAQ - Brain Tumor Detection{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h2><i class="fas fa-question-circle"></i> Help & FAQ</h2>
+    <p class="text-muted">Find answers to common questions about using the system.</p>
+</div>
+
+<div class="feature-card">
+    <h4>Frequently Asked Questions</h4>
+    <div class="accordion" id="faqAccordion">
+        
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    What is a retinal image and why is it used?
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    A retinal image is a photograph of the back of your eye, including the optic nerve. It is used because the optic nerve can show signs of swelling (papilledema), which is often a symptom of increased pressure inside the skull, a condition sometimes caused by a brain tumor.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                    Is this system a substitute for a medical diagnosis?
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    <strong>No.</strong> This system is a screening tool designed to assist medical professionals. The results are for informational purposes only and should never be considered a definitive diagnosis. Always consult with a qualified medical doctor or neurologist for a final diagnosis and treatment plan.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                    What types of image files are supported?
+                </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    The system supports common image formats including JPG, PNG, and BMP. The maximum file size for upload is 16MB. For best results, please use clear, high-resolution retinal images.
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingFour">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                    How is my data protected?
+                </button>
+            </h2>
+            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    We prioritize your privacy and security. All user data and uploaded images are stored securely on our servers with HIPAA compliance standards. We use encryption and other security measures to protect your information and ensure confidentiality.
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="feature-card mt-4 text-center">
+    <h4>Still need help?</h4>
+    <p class="text-muted">If you have other questions, please contact our support team at support@braintumordetection.com.</p>
+</div>
+{% endblock %}

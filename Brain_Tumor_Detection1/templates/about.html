@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - Brain Tumor Detection{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h2><i class="fas fa-info-circle"></i> About the System</h2>
+    <p class="text-muted">Our mission is to revolutionize early brain tumor detection.</p>
+</div>
+
+<div class="feature-card">
+    <h4>Our Mission</h4>
+    <p>The Brain Tumor Detection System uses state-of-the-art deep learning technology to analyze retinal images for signs of papilledema, a key indicator of increased intracranial pressure which can be caused by brain tumors.</p>
+    <p>By providing a fast, secure, and highly accurate analysis tool, we aim to assist medical professionals in the early identification of potential risks, leading to timely and effective treatment.</p>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-6 mb-3">
+        <div class="feature-card">
+            <h5><i class="fas fa-users text-primary"></i> The Team</h5>
+            <p>Developed by a dedicated team of KSSEM Final Year Students, this system combines expertise in computer vision, machine learning, and clinical diagnosis to deliver reliable results.</p>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-3">
+        <div class="feature-card">
+            <h5><i class="fas fa-heartbeat text-success"></i> Our Commitment</h5>
+            <p>We are committed to patient privacy and data security. All uploaded images and analysis results are handled with the utmost care, adhering to strict privacy protocols and compliance standards like HIPAA.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

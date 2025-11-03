@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Database - Brain Tumor Detection{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2><i class="fas fa-database"></i> Analysis Results Database</h2>
+    {% if current_user %}
+        <p class="text-muted">Showing analysis results for: <strong>{{ current_user.full_name }}</strong> ({{ current_user.username }})</p>
+    {% endif %}
+    <p class="text-muted">View all your previous analysis results and patient records</p>
+</div>
+
+<!-- Debug Information (remove in production) -->
+<div class="alert alert-info">
+    <p><strong>Current User ID:</strong> {{ session.user_id }}</p>
+    <p><strong>Records Found:</strong> {{ results|length }}</p>
+    {% if current_user %}
+        <p><strong>User:</strong> {{ current_user.full_name }} ({{ current_user.username }})</p>
+    {% endif %}
+</div>
+
+<div class="feature-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4><i class="fas fa-table text-primary"></i> Patient Analysis Records</h4>
+        <span class="badge bg-info">{{ results|length }} Records</span>
+    </div>
+    
+    {% if results %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-calendar"></i> Date & Time</th>
+                    <th><i class="fas fa-id-card"></i> Patient ID</th>
+                    <th><i class="fas fa-image"></i> Image Name</th>
+                    <th><i class="fas fa-diagnoses"></i> Prediction</th>
+                    <th><i class="fas fa-percentage"></i> Confidence</th>
+                    <th><i class="fas fa-list"></i> Key Features</th>
+                    <th><i class="fas fa-flag"></i> Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                <tr>
+                    <td>
+                        <small>{{ result.created_at[:16] }}</small>
+                    </td>
+                    <td>
+                        <strong>{{ result.patient_id }}</strong>
+                        {% if result.username %}
+                            <br><small class="text-muted">User: {{ result.username }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="text-muted">{{ result.image_name }}</span>
+                    </td>
+                    <td>
+                        <span class="{% if result.is_tumor %}text-danger{% else %}text-success{% endif %} fw-bold">
+                            {% if result.is_tumor %}
+                                <i class="fas fa-exclamation-triangle"></i>
+                            {% else %}
+                                <i class="fas fa-check-circle"></i>
+                            {% endif %}
+                            {{ result.prediction }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if result.confidence >= 90 %}success{% elif result.confidence >= 80 %}warning{% else %}danger{% endif %}">
+                            {{ "%.1f"|format(result.confidence) }}%
+                        </span>
+                    </td>
+                    <td>
+                        <small>
+                            {% for feature in result.features[:2] %}
+                                <div><i class="fas fa-dot-circle text-primary" style="font-size: 8px;"></i> {{ feature }}</div>
+                            {% endfor %}
+                            {% if result.features|length > 2 %}
+                                <div class="text-muted">... and {{ result.features|length - 2 }} more</div>
+                            {% endif %}
+                        </small>
+                    </td>
+                    <td>
+                        <span class="badge bg-{% if result.is_tumor %}danger{% else %}success{% endif %}">
+                            {% if result.is_tumor %}
+                                <i class="fas fa-exclamation"></i> URGENT
+                            {% else %}
+                                <i class="fas fa-check"></i> NORMAL
+                            {% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-database text-muted" style="font-size: 4em;"></i>
+        <h4 class="text-muted mt-3">No Analysis Results Found</h4>
+        <p class="text-muted">Upload and analyze retinal images to see results here.</p>
+        <p class="text-warning"><strong>Debug:</strong> User ID {{ session.user_id }} - No records found in database</p>
+        <div class="mt-3">
+            <a href="{{ url_for('home') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Start First Analysis
+            </a>
+            <button class="btn btn-secondary" onclick="checkDatabase()">
+                <i class="fas fa-search"></i> Debug Database
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if results %}
+<!-- Statistics Cards -->
+<div class="row mt-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="feature-card text-center">
+            <div class="mb-2">
+                <i class="fas fa-chart-bar text-primary" style="font-size: 2em;"></i>
+            </div>
+            <h5>Total Analyses</h5>
+            <h3 class="text-primary">{{ results|length }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="feature-card text-center">
+            <div class="mb-2">
+                <i class="fas fa-check-circle text-success" style="font-size: 2em;"></i>
+            </div>
+            <h5>Normal Results</h5>
+            <h3 class="text-success">{{ results|selectattr('is_tumor', 'equalto', false)|list|length }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="feature-card text-center">
+            <div class="mb-2">
+                <i class="fas fa-exclamation-triangle text-warning" style="font-size: 2em;"></i>
+            </div>
+            <h5>Abnormal Results</h5>
+            <h3 class="text-warning">{{ results|selectattr('is_tumor', 'equalto', true)|list|length }}</h3>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="feature-card text-center">
+            <div class="mb-2">
+                <i class="fas fa-percentage text-info" style="font-size: 2em;"></i>
+            </div>
+            <h5>Avg. Confidence</h5>
+            <h3 class="text-info">
+                {% if results %}
+                    {{ "%.1f"|format((results|sum(attribute='confidence')) / results|length) }}%
+                {% else %}
+                    0%
+                {% endif %}
+            </h3>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="text-center mt-4">
+    <a href="{{ url_for('home') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> New Analysis
+    </a>
+    <a href="{{ url_for('analysis') }}" class="btn btn-secondary">
+        <i class="fas fa-microscope"></i> Go to Analysis
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function checkDatabase() {
+    fetch('/health')
+    .then(response => response.json())
+    .then(data => {
+        console.log('Health check:', data);
+        alert('Health Check Result:\n' + JSON.stringify(data, null, 2));
+    })
+    .catch(error => {
+        console.error('Health check error:', error);
+        alert('Health check failed: ' + error.message);
+    });
+}
+
+// Auto-refresh database every 30 seconds if no results
+// {% if not results %}
+// setTimeout(() => {
+//     console.log('Auto-refreshing database page...');
+//     window.location.reload();
+// }, 30000);
+// {% endif %}
+// </script>
+// {% endblock %}

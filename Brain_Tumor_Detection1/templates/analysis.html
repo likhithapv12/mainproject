@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis - Brain Tumor Detection{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h2><i class="fas fa-microscope"></i> Retinal Image Analysis</h2>
+    <p class="text-muted">Advanced processing and AI-powered detection</p>
+</div>
+
+<!-- Image Display -->
+<div class="feature-card text-center">
+    <h4><i class="fas fa-image text-primary"></i> Image Ready for Analysis</h4>
+    <p><strong>File:</strong> {{ image_info.original_name }}</p>
+    <p><strong>Size:</strong> {{ "%.2f"|format(image_info.file_size / (1024 * 1024)) }} MB</p>
+    <img src="{{ url_for('uploaded_file', filename=image_info.filename) }}" alt="Retinal Image" class="image-preview">
+</div>
+
+<!-- Processing Steps -->
+<div class="processing-steps" id="processingSteps" style="display: none;">
+    <h4><i class="fas fa-cogs"></i> Processing Pipeline</h4>
+    <div class="step" id="step1">
+        <span class="step-icon"><i class="fas fa-upload"></i></span>
+        <span>Image Upload & Validation</span>
+    </div>
+    <div class="step" id="step2">
+        <span class="step-icon"><i class="fas fa-magic"></i></span>
+        <span>Preprocessing (Resize, Normalize, CLAHE Enhancement)</span>
+    </div>
+    <div class="step" id="step3">
+        <span class="step-icon"><i class="fas fa-search"></i></span>
+        <span>Feature Extraction (Papilledema Detection, RNFL Analysis)</span>
+    </div>
+    <div class="step" id="step4">
+        <span class="step-icon"><i class="fas fa-brain"></i></span>
+        <span>CNN Model Prediction & Classification</span>
+    </div>
+    <div class="step" id="step5">
+        <span class="step-icon"><i class="fas fa-save"></i></span>
+        <span>Prepare Results for Database Storage</span>
+    </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="progress-bar" id="progressBar" style="display: none;">
+    <div class="progress-fill" id="progressFill"></div>
+</div>
+
+<!-- Control Buttons -->
+<div class="text-center mb-4">
+    <button class="btn btn-success" onclick="startAnalysis()" id="startAnalysisBtn">
+        <i class="fas fa-play"></i> Start Analysis
+    </button>
+    <a href="{{ url_for('new_analysis') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Home
+    </a>
+</div>
+
+<!-- Results Section -->
+<div id="analysisResults"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let analysisInProgress = false;
+
+function startAnalysis() {
+    if (analysisInProgress) return;
+    
+    analysisInProgress = true;
+    const startBtn = document.getElementById('startAnalysisBtn');
+    const processingDiv = document.getElementById('processingSteps');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const resultsDiv = document.getElementById('analysisResults');
+    
+    // Show processing elements
+    processingDiv.style.display = 'block';
+    progressBar.style.display = 'block';
+    startBtn.disabled = true;
+    startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    resultsDiv.innerHTML = '';
+    
+    // Reset steps
+    const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+    steps.forEach(step => {
+        document.getElementById(step).classList.remove('completed', 'processing');
+    });
+    
+    // Start analysis on server
+    fetch('/start_analysis', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            simulateProcessingSteps(data.result);
+        } else {
+            alert('Analysis failed: ' + data.error);
+            resetAnalysis();
+        }
+    })
+    .catch(error => {
+        alert('Analysis error: ' + error.message);
+        resetAnalysis();
+    });
+}
+
+function simulateProcessingSteps(result) {
+    const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+    const progressFill = document.getElementById('progressFill');
+    let currentStep = 0;
+    
+    function processNextStep() {
+        if (currentStep > 0) {
+            document.getElementById(steps[currentStep - 1]).classList.remove('processing');
+            document.getElementById(steps[currentStep - 1]).classList.add('completed');
+        }
+        
+        if (currentStep < steps.length) {
+            document.getElementById(steps[currentStep]).classList.add('processing');
+            progressFill.style.width = ((currentStep + 1) / steps.length * 100) + '%';
+            currentStep++;
+            setTimeout(processNextStep, 2000);
+        } else {
+            // Processing complete
+            document.getElementById(steps[steps.length - 1]).classList.remove('processing');
+            document.getElementById(steps[steps.length - 1]).classList.add('completed');
+            showAnalysisResults(result);
+            resetAnalysis();
+        }
+    }
+    
+    processNextStep();
+}
+
+function showAnalysisResults(result) {
+    const resultsDiv = document.getElementById('analysisResults');
+    const isTumor = result.is_tumor;
+    
+    resultsDiv.innerHTML = `
+        <div class="result-panel ${isTumor ? 'tumor' : ''}">
+            <h3>${isTumor ? '<i class="fas fa-exclamation-triangle"></i> ATTENTION REQUIRED' : '<i class="fas fa-check-circle"></i> NORMAL RESULT'}</h3>
+            <h4>${result.prediction}</h4>
+            <p><strong>Confidence Level:</strong> ${result.confidence}%</p>
+            <p><strong>Patient ID:</strong> ${result.patient_id}</p>
+            <p><strong>Analysis Completed:</strong> ${result.timestamp}</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-6 mb-3">
+                <div class="feature-card">
+                    <h5><i class="fas fa-search text-primary"></i> Key Findings</h5>
+                    <ul class="list-unstyled">
+                        ${result.features.map(feature => `<li><i class="fas fa-check text-success"></i> ${feature}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="feature-card">
+                    <h5><i class="fas fa-stethoscope text-danger"></i> Medical Recommendation</h5>
+                    <p>${isTumor ? 
+                        '<strong class="text-danger">URGENT:</strong> Immediate consultation with a neurologist is strongly recommended. Advanced imaging studies (MRI/CT scan) should be conducted within 48 hours.' : 
+                        '<strong class="text-success">ROUTINE:</strong> No immediate concerns detected. Continue with regular ophthalmologic examinations as scheduled.'
+                    }</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="feature-card">
+                    <h5><i class="fas fa-cog text-info"></i> Technical Details</h5>
+                    <p>
+                        <strong>Model:</strong> CNN-ResNet50 Architecture<br>
+                        <strong>Processing Time:</strong> ${result.processing_time}s<br>
+                        <strong>Image Resolution:</strong> 512x512 pixels<br>
+                        <strong>Enhancement:</strong> CLAHE Applied
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="feature-card">
+                    <h5><i class="fas fa-clipboard-list text-warning"></i> Next Steps</h5>
+                    <ol>
+                        <li>Save result to database</li>
+                        <li>Print/download report for records</li>
+                        <li>${isTumor ? 'Schedule urgent neurological consultation' : 'Schedule routine follow-up'}</li>
+                        <li>Monitor patient symptoms</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <button class="btn btn-primary" onclick="saveToDatabase()">
+                <i class="fas fa-save"></i> Save to Database
+            </button>
+            <a href="{{ url_for('new_analysis') }}" class="btn btn-secondary">
+                <i class="fas fa-redo"></i> New Analysis
+            </a>
+        </div>
+    `;
+}
+
+function saveToDatabase() {
+    const saveBtn = event.target;
+    const originalText = saveBtn.innerHTML;
+    
+    // Show loading state
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
+    fetch('/save_result', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        console.log('Save response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Save response data:', data);
+        if (data.success) {
+            alert('✅ Analysis results saved successfully to database!');
+            // Change button to show success
+            saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved Successfully';
+            saveBtn.classList.remove('btn-primary');
+            saveBtn.classList.add('btn-success');
+            
+            // Add link to view database
+            setTimeout(() => {
+                const viewDbBtn = document.createElement('a');
+                viewDbBtn.href = '/database';
+                viewDbBtn.className = 'btn btn-info';
+                viewDbBtn.innerHTML = '<i class="fas fa-database"></i> View in Database';
+                saveBtn.parentNode.appendChild(viewDbBtn);
+            }, 1000);
+            
+        } else {
+            alert('❌ Save failed: ' + (data.error || 'Unknown error'));
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Save error:', error);
+        alert('❌ Save error: ' + error.message);
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+    });
+}
+
+function resetAnalysis() {
+    analysisInProgress = false;
+    const startBtn = document.getElementById('startAnalysisBtn');
+    startBtn.disabled = false;
+    startBtn.innerHTML = '<i class="fas fa-play"></i> Start Analysis';
+}
+</script>
+{% endblock %}
